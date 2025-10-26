@@ -26,3 +26,51 @@
 # Example Rules:
 1,Block,-,-,10.0.0.1/32,10.0.1.0/24,6,-,80,Block 10.0.0.1 from accessing a web server on the 10.0.1.0/24 network
 2,Allow,-,-,10.0.0.1/32,10.0.1.125/32,6,-,80,Allow 10.0.0.1 to access a web server on 10.0.1.125 overriding previous rule
+
+# ----------------------------
+# Task 1: cn4(10.0.30.4) TCP outbound worm 차단
+100,Block,-,-,10.0.30.4/32,-,6,-,-,Task1: Block all TCP from cn4
+
+# ----------------------------
+# Task 2: cn5(10.0.30.5) 완전 격리(양방향, 모든 프로토콜)
+101,Block,-,-,10.0.30.5/32,-,-,-,-,Task2: Isolate cn5 outbound all
+102,Block,-,-,-,10.0.30.5/32,-,-,-,Task2: Isolate cn5 inbound all
+
+# ----------------------------
+# Task 3: 인터넷→기업망 ICMP 차단 (단, HQ는 예외로 개방)
+# - World to US/IN/CN/UK ping 차단
+150,Block,-,-,-,10.0.1.0/24,1,-,-,Task3: Block ICMP to US subnet from world
+151,Block,-,-,-,10.0.20.0/24,1,-,-,Task3: Block ICMP to India subnet from world
+152,Block,-,-,-,10.0.30.0/24,1,-,-,Task3: Block ICMP to China subnet from world
+153,Block,-,-,-,10.0.40.0/24,1,-,-,Task3: Block ICMP to UK subnet from world
+# - HQ에서 US/IN/UK로 ping 허용(Allow가 Block을 override)
+160,Allow,-,-,10.0.0.0/24,10.0.1.0/24,1,-,-,Task3: Allow ICMP HQ->US
+161,Allow,-,-,10.0.0.0/24,10.0.20.0/24,1,-,-,Task3: Allow ICMP HQ->India
+162,Allow,-,-,10.0.0.0/24,10.0.40.0/24,1,-,-,Task3: Allow ICMP HQ->UK
+
+# ----------------------------
+# Task 4: cn3가 웹서버 응답(소스포트 80/443) 못 보내게
+110,Block,-,-,10.0.30.3/32,-,6,80,-,Task4: Block HTTP responses from cn3 (src port 80)
+111,Block,-,-,10.0.30.3/32,-,6,443,-,Task4: Block HTTPS responses from cn3 (src port 443)
+
+# ----------------------------
+# Task 5: us3(10.0.1.33) TCP 9520 접근 제한 (CIDR 최소화, /28 이내)
+# UK(10.0.40.128~131) → /30
+120,Block,-,-,10.0.40.128/30,10.0.1.33/32,6,-,9520,Task5: Block UK /30 to us3:9520
+# India(in4=126, in5=125) → 10.0.20.124/30
+121,Block,-,-,10.0.20.124/30,10.0.1.33/32,6,-,9520,Task5: Block India /30 to us3:9520
+# us5, hq5 개별 호스트
+122,Block,-,-,10.0.1.125/32,10.0.1.33/32,6,-,9520,Task5: Block us5 to us3:9520
+123,Block,-,-,10.0.0.220/32,10.0.1.33/32,6,-,9520,Task5: Block hq5 to us3:9520
+
+# ----------------------------
+# Task 6: us1 MAC 복제 장비의 모든 UDP 트래픽 차단
+130,Block,00:00:00:01:00:1e,-,-,-,17,-,-,Task6: Block UDP from us1-cloned MAC
+
+# ----------------------------
+# Task 7: 인터넷→기업망 TCP 25(SMTP) 차단(서브넷별)
+140,Block,-,-,-,10.0.0.0/24,6,-,25,Task7: Block SMTP to HQ
+141,Block,-,-,-,10.0.1.0/24,6,-,25,Task7: Block SMTP to US
+142,Block,-,-,-,10.0.20.0/24,6,-,25,Task7: Block SMTP to India
+143,Block,-,-,-,10.0.30.0/24,6,-,25,Task7: Block SMTP to China
+144,Block,-,-,-,10.0.40.0/24,6,-,25,Task7: Block SMTP to UK
